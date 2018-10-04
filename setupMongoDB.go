@@ -1,12 +1,12 @@
 package main
 
 import (
-	"shopApi/model"
 	"bufio"
 	"encoding/json"
 	"fmt"
 	"gopkg.in/mgo.v2"
 	"os"
+	"shopApi/model"
 )
 
 func setup(host string) {

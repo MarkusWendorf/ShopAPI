@@ -1,11 +1,11 @@
 package routes
 
 import (
+	"encoding/json"
+	"net/http"
 	"shopApi/model"
 	"shopApi/token"
 	"shopApi/util"
-	"encoding/json"
-	"net/http"
 )
 
 type LoginRequestBody struct {

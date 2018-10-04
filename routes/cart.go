@@ -1,11 +1,11 @@
 package routes
 
 import (
-	"shopApi/model"
-	"shopApi/util"
 	"encoding/json"
 	"log"
 	"net/http"
+	"shopApi/model"
+	"shopApi/util"
 )
 
 type CartRequestBody struct {

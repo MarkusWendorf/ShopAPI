@@ -1,10 +1,10 @@
 package routes
 
 import (
-	"shopApi/model"
-	"shopApi/util"
 	"encoding/json"
 	"net/http"
+	"shopApi/model"
+	"shopApi/util"
 )
 
 type RegisterRequestBody struct {

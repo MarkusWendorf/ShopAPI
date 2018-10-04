@@ -1,15 +1,15 @@
 package main
 
 import (
-	"shopApi/database"
-	"shopApi/middleware"
-	"shopApi/routes"
 	"flag"
 	"fmt"
 	"github.com/go-chi/chi"
 	"gopkg.in/mgo.v2"
 	"log"
 	"net/http"
+	"shopApi/database"
+	"shopApi/middleware"
+	"shopApi/routes"
 )
 
 func main() {

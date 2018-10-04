@@ -1,11 +1,11 @@
 package middleware
 
 import (
+	"context"
+	"net/http"
 	"shopApi/model"
 	"shopApi/token"
 	"shopApi/util"
-	"context"
-	"net/http"
 )
 
 func AuthMiddleware(next http.Handler) http.Handler {

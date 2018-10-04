@@ -1,10 +1,10 @@
 package util
 
 import (
-	"shopApi/model"
 	"encoding/json"
 	"log"
 	"net/http"
+	"shopApi/model"
 )
 
 func Respond(w http.ResponseWriter, data *model.Response, status int) {

@@ -1,13 +1,13 @@
 package routes
 
 import (
+	"github.com/go-chi/chi"
+	"math"
+	"net/http"
 	"shopApi/database"
 	"shopApi/model"
 	"shopApi/util"
 	"shopApi/util/urlQueryParser"
-	"github.com/go-chi/chi"
-	"math"
-	"net/http"
 )
 
 func (h *Handlers) GetCategoryNames(w http.ResponseWriter, r *http.Request) {

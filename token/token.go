@@ -1,11 +1,11 @@
 package token
 
 import (
-	"shopApi/model"
 	"crypto/rsa"
 	"github.com/dgrijalva/jwt-go"
 	"io/ioutil"
 	"os"
+	"shopApi/model"
 	"time"
 )
 
