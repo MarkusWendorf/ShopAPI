@@ -4,23 +4,56 @@ import (
 	"net/http"
 )
 
-const origin = "http://localhost:8080"
+type CorsConfig struct {
+	AllowedOrigins   []string
+	AllowedHeaders   string
+	AllowCredentials bool
+}
 
-func CorsMiddleware(next http.Handler) http.Handler {
+func CorsMiddleware(config CorsConfig) func(next http.Handler) http.Handler {
 
-	fn := func(w http.ResponseWriter, r *http.Request) {
+	return func(next http.Handler) http.Handler {
 
-		headers := w.Header()
-		headers.Add("Access-Control-Allow-Origin", origin)
-		headers.Add("Access-Control-Allow-Credentials", "true")
-		headers.Add("Access-Control-Allow-Headers", "authorization")
+		fn := func(w http.ResponseWriter, r *http.Request) {
 
-		if r.Method == http.MethodOptions {
-			return
+			origin := r.Header.Get("origin")
+
+			if !isValidOrigin(config.AllowedOrigins, origin) {
+				// skip; dont set cors headers
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			headers := w.Header()
+			headers.Add("Access-Control-Allow-Origin", origin)
+
+			if config.AllowCredentials {
+				headers.Add("Access-Control-Allow-Credentials", "true")
+			}
+
+			if config.AllowedHeaders != "" {
+				headers.Add("Access-Control-Allow-Headers", config.AllowedHeaders)
+			}
+
+			if r.Method == http.MethodOptions {
+				// no further handling for method OPTIONS
+				return
+			}
+
+			next.ServeHTTP(w, r)
 		}
 
-		next.ServeHTTP(w, r)
+		return http.HandlerFunc(fn)
+	}
+}
+
+func isValidOrigin(allowedOrigins []string, origin string) bool {
+
+	for _, allowed := range allowedOrigins {
+		if origin == allowed || allowed == "*" {
+			return true
+		}
 	}
 
-	return http.HandlerFunc(fn)
+	return false
 }

@@ -1,9 +1,8 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/olivere/elastic"
 	"gopkg.in/mgo.v2"
 	"log"
 	"net/http"
@@ -14,46 +13,36 @@ import (
 
 func main() {
 
-	runSetup := flag.Bool("setup-only", false, "run initial setup (only run once)")
-	ipFlag := flag.String("ip", "localhost", "")
-	apiPort := flag.String("port", "3000", "")
-	flag.Parse()
+	mongo := "mongo:27017"
+	elasticSearch := "http://elastic:9200"
 
-	ip := *ipFlag
-	port := *apiPort
-	if *runSetup {
-		setup(ip)
-		return
-	}
-
-	serve(ip, port)
+	setup(mongo, elasticSearch)
+	serve(mongo, elasticSearch,"3000")
 }
 
-func serve(host string, port string) {
+func serve(mongoAddr string, elasticAddr string, apiPort string) {
 
-	fmt.Printf("Connecting to mongodb %s\n", host)
+	mongoSession := initMongoDB(mongoAddr)
+	defer mongoSession.Close()
 
-	session, err := mgo.Dial(host)
-	if err != nil {
-		panic(err)
-	}
-	defer session.Close()
+	elasticClient := initElasticSearch(elasticAddr)
 
-	mongodb := session.DB("shop")
-	products := mongodb.C("products")
-	users := mongodb.C("users")
-	carts := mongodb.C("carts")
-	orders := mongodb.C("orders")
-
-	db := database.New(products, users, carts, orders)
+	db := database.New(mongoSession, elasticClient)
 	handlers := routes.NewHandlers(db)
 
 	mux := chi.NewMux()
-	mux.Use(middleware.CorsMiddleware)
+
+	corsOptions := middleware.CorsConfig{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+		AllowedHeaders:   "authorization",
+	}
+
+	mux.Use(middleware.CorsMiddleware(corsOptions))
 
 	mux.Get("/products/{id}", handlers.GetProduct)
 	mux.Get("/categories", handlers.GetCategoryNames)
-	mux.Get("/query", handlers.QueryProducts)
+	mux.Get("/search", handlers.QueryProducts)
 	mux.Post("/login", handlers.Login)
 	mux.Post("/register", handlers.Register)
 
@@ -66,6 +55,28 @@ func serve(host string, port string) {
 		r.Post("/order", handlers.Order)
 	})
 
-	fmt.Printf("Shop API running on port %s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, mux))
+	log.Printf("Shop API running on port %s\n", apiPort)
+	log.Fatal(http.ListenAndServe(":"+apiPort, mux))
+}
+
+func initElasticSearch(url string) *elastic.Client {
+
+	client, err := elastic.NewClient(elastic.SetURL(url))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Connected to MongoDB:", url)
+	return client
+}
+
+func initMongoDB(url string) *mgo.Session {
+
+	session, err := mgo.Dial(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Connected to ElasticSearch:", url)
+	return session
 }

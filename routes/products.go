@@ -2,12 +2,12 @@ package routes
 
 import (
 	"github.com/go-chi/chi"
-	"math"
 	"net/http"
+	"net/url"
 	"shopApi/database"
 	"shopApi/model"
 	"shopApi/util"
-	"shopApi/util/urlQueryParser"
+	"strconv"
 )
 
 func (h *Handlers) GetCategoryNames(w http.ResponseWriter, r *http.Request) {
@@ -37,33 +37,53 @@ func (h *Handlers) GetProduct(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) QueryProducts(w http.ResponseWriter, r *http.Request) {
 
-	parser := urlQueryParser.New(r.URL.Query())
+	values := r.URL.Query()
+	query := new(database.QueryBuilder)
 
-	name := parser.GetString("name", "")
-	category := parser.GetString("category", "")
+	if name := values.Get("name"); name != "" {
+		query = query.Name(name)
+	}
 
-	// convert from euro to cents
-	from := parser.GetInt("priceFrom", 0) * 100
-	to := parser.GetInt("priceTo", math.MaxInt32) * 100
+	if category := values.Get("category"); category != "" {
+		query = query.Category(category)
+	}
 
-	page := parser.GetInt("page", 1)
+	page, err := strconv.Atoi(values.Get("page"))
+	if err != nil {
+		page = 1
+	}
 
-	query := new(database.QueryBuilder).
-		Name(name).
-		Category(category).
-		Price(from, to).
-		Build()
+	from := getInt(values, "priceFrom", 100)
+	to := getInt(values, "priceTo", 100)
+	query = query.Price(from, to)
 
-	products, isLast, err := h.db.GetNthPage(query, page)
+	products, last, err := h.db.ExecuteQuery(query, 24, page)
 	if err != nil {
 		util.Respond(w, &model.Response{Error: err.Error()}, http.StatusBadRequest)
 		return
 	}
 
 	links := map[string]interface{}{
-		"isLast": isLast,
-		"page":   page,
+		"last": last,
+		"page": page,
 	}
 
 	util.Respond(w, &model.Response{Data: products, Links: links}, http.StatusOK)
+}
+
+
+func getInt(values url.Values, key string, multiplier int) *int {
+
+	val := values.Get(key)
+	if val == "" {
+		return nil
+	}
+
+	toInt, err := strconv.Atoi(val)
+	if err != nil {
+		return nil
+	}
+
+	toInt *= multiplier
+	return &toInt
 }

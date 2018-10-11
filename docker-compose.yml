@@ -1,0 +1,14 @@
+version: '3'
+services:
+  elastic:
+    image: blacktop/elasticsearch
+
+  mongo:
+    image: mvertes/alpine-mongo
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"

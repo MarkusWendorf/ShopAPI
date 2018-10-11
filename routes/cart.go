@@ -25,6 +25,7 @@ func (h Handlers) Cart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	items := cartRequest.Items
+	// map[productId]quantity
 	quantities := map[string]int{}
 
 	for _, item := range items {
