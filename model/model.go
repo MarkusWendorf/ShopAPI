@@ -21,6 +21,13 @@ func (p Product) String() string {
 	return p.Pname + ", Price: " + strconv.Itoa(p.Price)
 }
 
+type AutocompleteProduct struct {
+	Id        string `json:"id"`
+	Category  string `json:"category"`
+	Pname     string `json:"pname"`
+	Highlight string `json:"highlight"`
+}
+
 type User struct {
 	Email    string        `json:"email"`
 	Id       bson.ObjectId `json:"id" bson:"_id,omitempty"`

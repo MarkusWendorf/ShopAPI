@@ -35,6 +35,14 @@ func (h *Handlers) GetProduct(w http.ResponseWriter, r *http.Request) {
 	util.Respond(w, &model.Response{Data: product}, http.StatusOK)
 }
 
+func (h *Handlers) Autocomplete(w http.ResponseWriter, r *http.Request) {
+
+	search := chi.URLParam(r, "search")
+
+	matches := h.db.Autocomplete(search)
+	util.Respond(w, &model.Response{Data: matches}, http.StatusOK)
+}
+
 func (h *Handlers) QueryProducts(w http.ResponseWriter, r *http.Request) {
 
 	values := r.URL.Query()
@@ -70,7 +78,6 @@ func (h *Handlers) QueryProducts(w http.ResponseWriter, r *http.Request) {
 
 	util.Respond(w, &model.Response{Data: products, Links: links}, http.StatusOK)
 }
-
 
 func getInt(values url.Values, key string, multiplier int) *int {
 

@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"github.com/olivere/elastic"
 	"log"
+	"regexp"
 	"shopApi/model"
 	"strings"
 )
+
+var highlightRegex = regexp.MustCompile(">(.*?)<")
 
 type QueryBuilder struct {
 	queries []elastic.Query
@@ -54,6 +57,36 @@ func (builder *QueryBuilder) Execute(client *elastic.Client, pageSize int, page 
 	return getResults(search, pageSize)
 }
 
+func (db *Database) ExecuteQuery(builder *QueryBuilder, pageSize int, page int) ([]model.Product, int, error) {
+	return builder.Execute(db.elasticClient, pageSize, page)
+}
+
+func (db *Database) Autocomplete(input string) []model.AutocompleteProduct {
+
+	highlight := elastic.NewHighlight().Field("pname").
+		PreTags("<b>").
+		PostTags("</b>")
+
+	query := elastic.NewMatchQuery("pname", input)
+	res, err := db.elasticClient.Search("products").Type("product").
+		Query(query).Highlight(highlight).Do(context.Background())
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	products, err := collectAutocomplete(res.Hits)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return products
+}
+
+
+
+// ===== Helpers =====
+
 func getResults(search *elastic.SearchService, pageSize int) ([]model.Product, int, error) {
 
 	res, err := search.Do(context.Background())
@@ -62,23 +95,48 @@ func getResults(search *elastic.SearchService, pageSize int) ([]model.Product, i
 		return nil, 1, err
 	}
 
-	products := make([]model.Product, 0)
-
-	for _, hit := range res.Hits.Hits {
-
-		var p model.Product
-		if err = json.Unmarshal(*hit.Source, &p); err != nil {
-			return nil, 1, err
-		}
-
-		products = append(products, p)
-
+	products, err := collectProducts(res.Hits)
+	if err != nil {
+		return products, 1, err
 	}
 
 	maxPage := res.TotalHits() / int64(pageSize)
 	return products, int(maxPage + 1), nil
 }
 
-func (db *Database) ExecuteQuery(builder *QueryBuilder, pageSize int, page int) ([]model.Product, int, error) {
-	return builder.Execute(db.elasticClient, pageSize, page)
+func collectProducts(hits *elastic.SearchHits) ([]model.Product, error) {
+
+	products := make([]model.Product, 0)
+
+	for _, hit := range hits.Hits {
+
+		var p model.Product
+		if err := json.Unmarshal(*hit.Source, &p); err != nil {
+			return nil, err
+		}
+
+		products = append(products, p)
+	}
+
+	return products, nil
+}
+
+func collectAutocomplete(hits *elastic.SearchHits) ([]model.AutocompleteProduct, error) {
+
+	products := make([]model.AutocompleteProduct, 0)
+
+	for _, hit := range hits.Hits {
+
+		var p model.AutocompleteProduct
+		if err := json.Unmarshal(*hit.Source, &p); err != nil {
+			return nil, err
+		}
+
+		highlight := hit.Highlight["pname"][0]
+		p.Highlight = highlight
+
+		products = append(products, p)
+	}
+
+	return products, nil
 }

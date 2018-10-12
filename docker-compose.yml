@@ -2,6 +2,8 @@ version: '3'
 services:
   elastic:
     image: blacktop/elasticsearch
+    ports:
+    - "10200:9200"
 
   mongo:
     image: mvertes/alpine-mongo

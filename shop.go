@@ -41,6 +41,7 @@ func serve(mongoAddr string, elasticAddr string, apiPort string) {
 	mux.Use(middleware.CorsMiddleware(corsOptions))
 
 	mux.Get("/products/{id}", handlers.GetProduct)
+	mux.Get("/autocomplete/{search}", handlers.Autocomplete)
 	mux.Get("/categories", handlers.GetCategoryNames)
 	mux.Get("/search", handlers.QueryProducts)
 	mux.Post("/login", handlers.Login)
