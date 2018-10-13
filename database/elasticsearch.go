@@ -6,12 +6,9 @@ import (
 	"fmt"
 	"github.com/olivere/elastic"
 	"log"
-	"regexp"
 	"shopApi/model"
 	"strings"
 )
-
-var highlightRegex = regexp.MustCompile(">(.*?)<")
 
 type QueryBuilder struct {
 	queries []elastic.Query
@@ -69,7 +66,10 @@ func (db *Database) Autocomplete(input string) []model.AutocompleteProduct {
 
 	query := elastic.NewMatchQuery("pname", input)
 	res, err := db.elasticClient.Search("products").Type("product").
-		Query(query).Highlight(highlight).Do(context.Background())
+		Query(query).
+		Highlight(highlight).
+		MinScore(3).
+		Do(context.Background())
 
 	if err != nil {
 		log.Fatal(err)
