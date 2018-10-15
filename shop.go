@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/go-chi/chi"
 	"github.com/olivere/elastic"
 	"gopkg.in/mgo.v2"
@@ -9,15 +10,26 @@ import (
 	"shopApi/database"
 	"shopApi/middleware"
 	"shopApi/routes"
+	"time"
 )
+
+// time to wait for containers to spin up
+const StartUpTimout = 60 * time.Second
 
 func main() {
 
 	mongo := "mongo:27017"
 	elasticSearch := "http://elastic:9200"
 
-	setup(mongo, elasticSearch)
-	serve(mongo, elasticSearch,"3000")
+	runSetup := flag.Bool("setup-only", false, "only run intial setup")
+
+	flag.Parse()
+	if *runSetup {
+		log.Println("Running initial setup")
+		setup(mongo, elasticSearch)
+	} else {
+		serve(mongo, elasticSearch,"3000")
+	}
 }
 
 func serve(mongoAddr string, elasticAddr string, apiPort string) {
@@ -62,7 +74,7 @@ func serve(mongoAddr string, elasticAddr string, apiPort string) {
 
 func initElasticSearch(url string) *elastic.Client {
 
-	client, err := elastic.NewClient(elastic.SetURL(url))
+	client, err := elastic.NewClient(elastic.SetURL(url), elastic.SetHealthcheckTimeoutStartup(StartUpTimout))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +85,7 @@ func initElasticSearch(url string) *elastic.Client {
 
 func initMongoDB(url string) *mgo.Session {
 
-	session, err := mgo.Dial(url)
+	session, err := mgo.DialWithTimeout(url, StartUpTimout)
 	if err != nil {
 		log.Fatal(err)
 	}

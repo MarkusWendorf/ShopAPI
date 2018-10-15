@@ -11,10 +11,7 @@ import (
 	"os"
 	"shopApi/model"
 	"strconv"
-	"time"
 )
-
-const START_UP_TIMEOUT = 30 * time.Second
 
 func setup(mongodb string, elasticSearch string) {
 
@@ -30,27 +27,22 @@ func setupMongo(url string, products []model.Product) {
 
 	log.Println("Setup MongoDB", url)
 
-	session, err := mgo.DialWithTimeout(url, START_UP_TIMEOUT)
-	if err != nil {
-		log.Fatal(err)
-	}
+	session := initMongoDB(url)
 	defer session.Close()
-
-	log.Println("Connected to MongoDB")
 
 	db := session.DB("shop")
 	productsCollection := db.C("products")
 
 	for _, p := range products {
 
-		err = productsCollection.Insert(p)
+		err := productsCollection.Insert(p)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
 	index := mgo.Index{Key: []string{"id"}, Unique: true, DropDups: true, Sparse: true,}
-	if err = productsCollection.EnsureIndex(index); err != nil {
+	if err := productsCollection.EnsureIndex(index); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -59,12 +51,7 @@ func setupElastic(url string, products []model.Product) {
 
 	log.Println("Setup Elasticsearch")
 
-	client, err := elastic.NewClient(elastic.SetURL(url), elastic.SetHealthcheckTimeoutStartup(START_UP_TIMEOUT))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Connected to Elasticsearch")
+	client := initElasticSearch(url)
 
 	index := "products"
 	b, err := ioutil.ReadFile("mapping.json")
