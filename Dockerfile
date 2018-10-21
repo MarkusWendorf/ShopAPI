@@ -17,4 +17,4 @@ FROM alpine:edge
 
 WORKDIR /root/
 COPY --from=0 /src .
-ENTRYPOINT ./shopApi
+ENTRYPOINT /bin/sh setup.sh
