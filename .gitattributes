@@ -1,1 +1,1 @@
-setup.sh -lf
+*.sh text eol=lf
