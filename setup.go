@@ -16,8 +16,6 @@ import (
 func setup(mongodb string, elasticSearch string) {
 
 	products := parseProductsJSON()
-	log.Println("PRODUCTS:::::", len(products))
-
 
 	setupMongo(mongodb, products)
 	setupElastic(elasticSearch, products)

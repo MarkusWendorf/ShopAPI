@@ -50,6 +50,7 @@ func serve(mongoAddr string, elasticAddr string, apiPort string) {
 		AllowedHeaders:   "authorization",
 	}
 
+	mux.Use(middleware.DelayMiddleware)
 	mux.Use(middleware.CorsMiddleware(corsOptions))
 
 	mux.Get("/products/{id}", handlers.GetProduct)
