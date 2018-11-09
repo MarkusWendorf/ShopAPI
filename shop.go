@@ -14,7 +14,7 @@ import (
 )
 
 // time to wait for containers to spin up
-const StartUpTimout = 60 * time.Second
+const StartUpTimeout = 60 * time.Second
 
 func main() {
 
@@ -75,7 +75,7 @@ func serve(mongoAddr string, elasticAddr string, apiPort string) {
 
 func initElasticSearch(url string) *elastic.Client {
 
-	client, err := elastic.NewClient(elastic.SetURL(url), elastic.SetHealthcheckTimeoutStartup(StartUpTimout))
+	client, err := elastic.NewClient(elastic.SetURL(url), elastic.SetHealthcheckTimeoutStartup(StartUpTimeout))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func initElasticSearch(url string) *elastic.Client {
 
 func initMongoDB(url string) *mgo.Session {
 
-	session, err := mgo.DialWithTimeout(url, StartUpTimout)
+	session, err := mgo.DialWithTimeout(url, StartUpTimeout)
 	if err != nil {
 		log.Fatal(err)
 	}
